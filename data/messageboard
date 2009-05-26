@@ -1,0 +1,1443 @@
+Charles Elkan 	 184
+05-24-2009 03:23 PM ET (US)
+	
+/m182, /m183: It seems sensible to me to use the transformation only on both training and test examples, or on neither. However, since the multinomial distribution is not mathematically principled after the transformation, if some additional heuristic can improve accuracy, so be it.
+
+This particular dataset does have three very distinct classes. It is possible that it is so easy that reliable differences in accuracy between methods are hard to discern.
+Brent Payne 	 183
+05-24-2009 02:48 PM ET (US)
+	
+Edited by author 05-24-2009 02:49 PM
+/m182 log(x_j + 1) is used to discount multiple instances of words due to burstiness. Thus, you can apply it to either count, but it gives different results. Applying it to the the counts of a test examples, x_t, will reduce the burstiness of words in document x_t from affecting the prob(x_t|y). I believe this is what we covered in class. Applying it to the training data would reduce the impact of burstiness of each document in the corpus on the thetas. since burtiness is related to a word in a document, I imagine that a word's burstiness in a single document has little effect on theta after aggregating across a large corpus. On this dataset, the best combination I found was not to use the log calculation at all. Though the results are similar, and differences could be from different random selections. Our Bayesian classifier is currently exceeding 98% on 5-fold xval without using any tricks.
+C S JonesPerson was signed in when posted 	 182
+05-24-2009 01:58 PM ET (US)
+	
+As a mitigation of burstiness, we had discussed using the transformation x_j -> log(x_j+1). Is this only during the training of the multinomial parameters, or is this transformation used on the test data as well?
+Charles Elkan 	 181
+05-21-2009 12:12 PM ET (US)
+	
+Edited by author 05-21-2009 12:13 PM
+/m178: Yes, the estimate of parameter j of a multinomial is
+
+theta_j = (1/T) SUM_x x_j
+
+The sum is over all documents x belonging to the set that you want to model with a multinomial. So yes, the sum is over only the documents in one class. We are training one multinomial model for each class.
+
+Smoothing. If you have a multinomial with theta_j = 0 for some j, then every document with x_j>0 for this j has zero probability, regardless of any other words in the document. Probabilities that are perfectly zero are undesirable, so we want theta_j > 0 for all j for all classes. Smoothing with a constant c is the way to achieve this. We set
+
+theta_j = (1/T') [c + SUM_x x_j]
+
+The constant c is called a pseudocount. Intuitively, it is a fake number of appearances of word j that we assume exist, regardless of the true number of appearances. Typically we choose c nonzero and c <= 1. The exact value of c can unfortunately strongly influence classification accuracy.
+
+We need to preserve the equality SUM_j theta_j = 1. Hence, T' must be different from T. Exercise for the reader: work out the value of T'.
+Charles Elkan 	 180
+05-21-2009 12:03 PM ET (US)
+	
+/m179: It's fine that the logarithm of a number under 1 is negative. As you add these together, you will get totals that are ever more negative. The highest probability corresponds to the total that is least negative, i.e. closest to zero. This is a bit confusing, but mathematically valid.
+student 	 179
+05-21-2009 12:55 AM ET (US)
+	
+When performing numerical computation with log probabilities, how do you deal with the fact that log(theta_j) is a negative number? Do we need to offset theta by 1 as with the counts or something like that?
+David Zaleta 	 178
+05-21-2009 12:17 AM ET (US)
+	
+Edited by author 05-21-2009 12:45 AM
+I have two questions about the assignment for Chapter 9 (Text Mining).
+
+1. In the assignmet it states that
+
+"..you may need to smooth the multinomials with pseudocounts."
+
+I don't remember any discussion of this is class. Any hints? I assume it must be something like smoothing the counts toward some mean value but not clear what mean value to use.
+
+2. In the notes that I took from class you had theta_sub_j = SUM_over_x_in_R(x_j)/T
+
+My question is, is R over the entire set of documents or only over those documents in the specific class that you are building the probabilities for? I am guessing the latter but just not sure...
+Kristen Jaskie 	 177
+05-19-2009 12:49 PM ET (US)
+	
+We settled on random numbers chosen between 1 and the square root of 5 for both r and c in the initial rank, and the previously found average r and c=1 for every rank after that. There didn't seem to be much variance in the results regardless of starting point, indicating that the problem is fairly convex and it doesn't really matter.
+Brent Payne 	 176
+05-19-2009 11:49 AM ET (US)
+	
+We tried both ones and the sqrt of the average of the rows / columns value. Using 100 epochs, they both converged to the same values for the first rank. Using 30 epochs, the 'sqrt' approach was closer to the converged values. These results were not calculated, but inferred from the resulting accuracy against the training set. Currently we are using ones, sqrt of negative numbers, yuk
+student 	 175
+05-19-2009 01:57 AM ET (US)
+	
+What kind of initializations are people using for r and c?
+Charles Elkan 	 174
+05-19-2009 01:10 AM ET (US)
+	
+/m173: As far as I know all columns are data. I don't know why some are integers. I think the data are synthetic, and the entries seem Gaussian, at least approximately.
+Kristen Jaskie 	 173
+05-19-2009 01:03 AM ET (US)
+	
+We are looking at the fraud databases for the second extra credit problem and are having a little bit of trouble deciphering them. There are 15 columns of floating point numbers, and 15 columns of integers. The only description for the data is:
+
+"each row represents the dollar amount paid to a particular doctor, and each column represents a particular service. So the ijth entry represents the amount paid to doctor i for service j"
+
+Our question is, are all 30 columns data or are the integer columns some kind of label? Anybody else looked at this and come to any conclusions?
+Charles Elkan 	 172
+05-18-2009 11:12 PM ET (US)
+	
+/m171: Yes, you use the same A to compute error on both sets. A is the model you learn from the training data, in the same way that you learn a classifier from training data, then apply it to both training and test data.
+student 	 171
+05-18-2009 10:51 PM ET (US)
+	
+For a multiplicative model A = r*c learned on the training set, do you simply use this A calculate the mean error on both the training set and test set? It makes sense to use this A to training data X to evaluate the training process, but I'm not sure how to test this on the validation set.
+Charles ElkanPerson was signed in when posted 	 170
+05-18-2009 04:59 PM ET (US)
+	
+Scores for quiz 5 and assignment 5
+
+Out of 6 and out of 10, as usual.
+
+Quiz: mean 3.6, stdev 1.3.
+Assignment: mean 6.5, stdev 2.2.
+
+Correlation coefficients are positive.
+Charles ElkanPerson was signed in when posted 	 169
+05-18-2009 04:56 PM ET (US)
+	
+Partners for the 291 assignments
+
+The guidelines are:
+- You should be in a group of exactly 2 people, not 1 or 3.
+- You are free to switch partners between assignments.
+- People working in industry should partner with students, and vice versa.
+
+So, for tomorrow's assignment and the rest of the quarter, please take the initiative to find new partners if necessary to meet these guidelines.
+C S JonesPerson was signed in when posted 	 168
+05-18-2009 02:33 PM ET (US)
+	
+/m167: Hey Kristen. I think you may be overfitting. I'm getting about 0.72 at about rank 8-10, after which it levels out on the test data (the training continues to improve). One concern is the number of parameters in your final model. Each rank introduces 943+1682 = 2625 parameters. Thus, even my rank 10 model has about 26k parameters, which is probably pretty overfitted. With 50 ranks, you will have as many parameters as observations.
+Kristen Jaskie 	 167
+05-18-2009 03:34 AM ET (US)
+	
+So with a bit of fiddling, and being careful how I set my initial r and c values between each rank model, I'm getting a MAE of around 0.3 with a rank 50 model. With a very nice rank/MAE curve. I'm a little concerned that this is overfitting the data however. Anybody else getting similar numbers? Is this reasonable?
+Charles Elkan 	 166
+05-17-2009 06:52 PM ET (US)
+	
+/m140, /m151, /m152: Correction to an earlier message: The true value of c for the positive-only assignment is c = p(s=1|y=1) = 0.4.
+Earlier I said c = 0.6 but should have said 1-c = 0.6.
+Charles Elkan 	 165
+05-17-2009 06:06 PM ET (US)
+	
+/m162: Ok, based on experience with how well people are doing so far, here is the breakdown:
+
+quizzes: 17% (lowest two scores are dropped)
+assignments: 50%
+final: 33%
+
+Rationale: Half your grade is based on individual work, and half on joint. The total time for the final will be about twice the total time for the quizzes.
+
+Questions on the final exam will be similar to quiz questions, but some will be longer. Questions on the final may concern topics not on any quiz, such as data preprocessing for example.
+Charles Elkan 	 164
+05-17-2009 06:02 PM ET (US)
+	
+/m163: I think both alternatives will work almost equally well. If you can find a significant difference experimentally, that would be interesting.
+Brent Payne 	 163
+05-17-2009 05:49 PM ET (US)
+	
+Should updates to r_i and c_i occur simultaneously or in order?
+
+simultaneously:
+r_i' = r_i - lambda * 2( r_i*c_j - x_ij) * c_j
+c_j' = c_j - lambda * 2( r_i*c_j - x_ij) * r_i
+
+in order:
+r_i'' = r_i - lambda * 2( r_i*c_j - x_ij) * c_j
+c_j'' = c_j - lambda * 2( r_i''*c_j - x_ij) * r_i''
+
+I think either will work, in order converging faster.
+student 	 162
+05-17-2009 04:03 PM ET (US)
+	
+What will the format of the final be and what is the overall grade breakdown for this course?
+Charles Elkan 	 161
+05-17-2009 01:21 PM ET (US)
+	
+/m158, /m159, /m160: Yes, these explanations are correct.
+
+For each training value x_ij, you update a single r value and a single c value, namely r_i and c_j.
+
+Depending on the dataset, a learning rate of 0.4 may well be too high. Try small learning rates first, then look for larger rates that still avoid divergence.
+Alexei Betin 	 160
+05-17-2009 02:32 AM ET (US)
+	
+Sounds right, for MAE 2(ri*cj-xij) should go away, but you need to multiply by the sign of (ri*cj-xij).
+Kristen Jaskie 	 159
+05-17-2009 02:07 AM ET (US)
+	
+/158
+I believe you would not have the 2 in this equation if we use MAE, only when using MSE. In MAE p=1, and in MSE p=2. Does that sound right to people?
+Alexei Betin 	 158
+05-17-2009 01:29 AM ET (US)
+	
+The way I understood it we need to iterate over examples and update both ri and cj on each example. So I use something to this effect:
+ri_new= ri_old - 2*learningRate * cj_old * ( ri_old*cj_old - xij );
+cj_new= cj_old - 2*learningRate * ri_old * ( ri_old*cj_old - xij );
+
+Problem is, with 0.4 learningRate MSE blows up, too - unless I keep r and c positive no matter what, which works fine for Rank 1, but clearly not appropriate for higher ranks...
+student 	 157
+05-17-2009 01:04 AM ET (US)
+	
+I'm a little confused about implementing stochastic gradient descent. This is what I'm currently doing for the multiplicative model:
+
+To train for R, whose elements are ri, I use d/dri = 2(ricj - xij)*cj in the update line. So, for each ri, I train over all j's. The problem is that ri blows up quickly as I go through j's... I must be misunderstanding something here.
+Charles Elkan 	 156
+05-16-2009 09:17 PM ET (US)
+	
+/m154, /m155: You are welcome to use any version of gradient descent for this assignment. If you have implemented more than one version, an experimental comparison would be very interesting.
+
+With newer versions of Matlab, the automatic compiler is quite good, so for loops can be quite fast. You can use the profiler to see what has been compiled and what hasn't. Often, the bottleneck is a call to a function such as "max". The overhead of function calls in Matlab is high, including for many built-in functions.
+
+The big advantage of SGD over batch SGD is far from superficial. This advantage is that every gradient evaluation, for each training example, can lead to a useful update. For some more explanation see the second half of http://www-cse.ucsd.edu/~elkan/250B/logreg.pdf. See also http://leon.bottou.org/projects/sgd.
+Matthew Kennel 	 155
+05-16-2009 07:46 PM ET (US)
+	
+Edited by author 05-16-2009 07:47 PM
+I think SGD is intrinsically sequential: the superficial advantage over batch gradient descent is that updates for later data use model parameters which have already been adjusted by previously seen data in the given epoch.
+
+Regular gradient descent freezes all parameters at each epoch.
+
+I think the timing differences are just because matlab happens to have optimized matrix intrinsics so that some computations go much faster than others---if everything were measured in number of elementary operations (or coded in C or Fortran), SGD would be faster.
+Matt Rodriguez 	 154
+05-16-2009 05:49 PM ET (US)
+	
+I understand the benefits of using stochastic gradient descent instead of gradient descent. However, my Matlab implementation that uses gradient descent is roughly 10 times faster than my implementation that uses SGD.
+The implementation that uses SGD uses a for loop to iterate all of the training examples. The implementation that uses gradient descent can calculate the gradient using matrix operations. Is it possible to implement a faster version of SGD that does not use a loop over the training set? In this assignment is it permitted to use gradient descent instead of stochastic gradient descent? I think it would especially make sense to use gradient descent on the large movielens data set which has ~10 million examples.
+
+It takes 90.18 seconds to run 30 epochs on the entire training set
+using SGD.
+
+It takes 8.98 seconds to run 30 epochs on the entire training set
+using gradient descent.
+
+Do people see similar run times for their algorithms?
+
+Matt
+Charles Elkan 	 153
+05-15-2009 09:01 PM ET (US)
+	
+Edited by author 05-15-2009 09:02 PM
+2009 UCSD Data Mining Contest sponsored by FICO
+
+This year's contest consists of two classification tasks based on e-commerce transaction anomaly data. The first task is to maximize accuracy of binary classification on a test data set, given a fully labeled training data set. The performance metric is the lift at 20% review rate. The second task is similar to task 1, but provides a couple of additional fields that have potential predictive information.
+
+FICO and UCSD will award prizes to first, second and third place winners in four categories: Task 1 undergraduate; Task 1 graduate; Task 2 undergraduate and Task 2 graduate. There is a total of $4,000 in prize money for each task, for a total of $8,000.
+
+We launched the contest on May 15, 2009. The contest will end July 15, 2009. The contest is international. All current undergraduate students, graduate students, and postdoctoral researchers studying full-time, in residence at an accredited university or college may compete for prizes. Others may compete but will not be eligible for prizes.
+
+To participate, and for more information, see http://mill.ucsd.edu
+C S JonesPerson was signed in when posted 	 152
+05-15-2009 05:52 PM ET (US)
+	
+/m140: Here's a list of results. I list the method, the value of c, the percentage of weights above 1, and the accuracy on the holdout set:
+
+Method, c, Pct. w > 1, Acc.
+unbiased estimator, 0.27, 15%, 75%
+biased estimator, 0.47, 1.5%, 84%
+true c, 0.6, 0.5%, 82%
+C S JonesPerson was signed in when posted 	 151
+05-15-2009 04:56 PM ET (US)
+	
+/m140: The unbiased estimate I had for c was 0.27, while the biased estimate was 0.47 (much close to the actual value). I'm curious to know what other students got for their estimates of c.
+Charles ElkanPerson was signed in when posted 	 150
+05-15-2009 04:08 PM ET (US)
+	
+/m148, /m144: I mean to stratify within each person. If person i has 40 ratings, then each of 5 folds should have 8 ratings from this person. Every time you train, you will be guaranteed to have 80% of each person's ratings for training. Each person has at least N ratings in the original set, where N=20 I think.
+Charles ElkanPerson was signed in when posted 	 149
+05-15-2009 04:06 PM ET (US)
+	
+/m146: The recommended way to train a rank-k decomposition is to train a rank-(k-1) decomposition a_ij, subtract this from the data x_ij giving the residual, and then train a rank-1 decomposition on the residual. So you don't need any novel formula for the gradient.
+  
+It is possible to train all 2*k vectors simultaneously for a rank-k decomposition, but this works much less well than sequential training, as far as I know.
+
+That said, I think your statement is correct.
+student_i 	 148
+05-15-2009 04:03 PM ET (US)
+	
+I'm still a little bit confused about the cross-validation procedure for this model. If we stratify our sample by person, then the parameter value for a person in the test set will be untrained. We could use an initial value of r_i to be the average rating for person i, but then our model will only be really trained for the c parameters.
+Charles ElkanPerson was signed in when posted 	 147
+05-15-2009 04:01 PM ET (US)
+	
+/m145: Traditionally, only sums of products are used for matrix factorization. Rank 3 means [a,b,c]*[d,e,f] = a*d .+ b*e .+ c*f and so on,
+where the letters denote vectors and ".+" means element-wise addition. So the assignment refers only to this type of decomposition.
+
+You are right that a sum of rank-1 additive decompositions is equivalent to a single additive decomposition: (a+d) .+ (b+e) = (a+b) .+ (d+e).
+
+What is possible, but has not been explored in the literature, is to do a multiplicative combination of rank-1 additive decompositions:
+(a+d) .* (b+e) etc. In this case, residuals would be defined by dividing, not by subtracting.
+student_i 	 146
+05-15-2009 03:59 PM ET (US)
+	
+My calculus is a little rusty, but it looks like the gradient of the absolute error function with respect to r'_i for a higher rank decomposition (e.g. A = r'c' + r''c'' + r'''c''') for a particular sample is sign(a_ij - x_ij)*c'_j. Is this correct?
+student_i 	 145
+05-15-2009 02:53 PM ET (US)
+	
+The assignment specs say that we should experiment with multiple rank decompositions. This seems to suggest that the additive model is not useful for this assignment, since a multiple rank additive model reduces to a rank-one additive model. Is this correct?
+Charles Elkan 	 144
+05-15-2009 11:43 AM ET (US)
+	
+/m141: Good questions. It is reasonable to stratify by person, so training data is always guaranteed to exist for each person. There are fewer movies than people, so the risk of having no training for a certain movie may be negligible.
+
+There are at least three broader issues here:
+
+(1) Making predictions for new users and/or new movies is important in applications, but difficult without training data; this is called the cold-start problem.
+
+(2) Accuracy results, and differences between algorithms, may depend on the details of how training and test sets are created. These details may not be good reflections of real applications.
+
+(3) Accuracy results may depend on software design decisions that have little to do with the main algorithm being tested. Here, accuracy may be influenced a lot by how predictions are made for new movies and new users, when the main stochastic gradient method is not applicable.
+Charles Elkan 	 143
+05-15-2009 10:33 AM ET (US)
+	
+/m142: Matlab and R would both be good choices. The stochastic gradient algorithm only takes a few lines od code, once you have the data loaded into an array. But then you need to write wrapper code for trying different learning rates, etc. etc. If you write your own operator in Java for Rapidminer, that would be a good contribution!
+student 	 142
+05-14-2009 07:40 PM ET (US)
+	
+What software approaches are people using for this assignment? We were thinking of using Matlab or R. Are there any packages available that perform useful functions for this assignment?
+Matthew Kennel 	 141
+05-14-2009 07:28 PM ET (US)
+	
+Question about Assignment 6:
+
+Exactly how should we be constructing the 'out of sample' test sets for this problem?
+
+If there are pairs of (person,movie,review), do we simply split uniformly on these?
+
+If we are making a model which predicts review(person,movie), what do we do when we see either a movie or person which was not in the training set whatsoever?
+
+Should we be creating test sets stratifying on person, so that there are always training data for every person that is seen in the test set, i.e. we are extrapolating the rating that existing, known people, would give to new, unseen movies?
+Charles ElkanPerson was signed in when posted 	 140
+05-14-2009 05:27 PM ET (US)
+	
+/m136: In fact, the correct relation is c*t_u = sum over unlabeled p(s=1|x). To see this, note that for a perfect select model, all positives receive the same score c (since they are selected at random and are indistinguishable) and negatives receive score 0.
+Yes.
+
+I don't have an explanation to suggest for why one estimator of c = p(s=1|y=1) leads to much better results than another. The true value of c is 0.6 for this particular dataset. Which estimator is closest to the truth, and how good a result do you get using the truth?
+Charles ElkanPerson was signed in when posted 	 139
+05-14-2009 05:18 PM ET (US)
+	
+/m137: Available now at http://www.cs.ucsd.edu/users/elkan/291/dm.pdf
+Charles ElkanPerson was signed in when posted 	 138
+05-14-2009 05:15 PM ET (US)
+	
+New applications of data mining
+
+From the Financial Times: Fico, the company behind the credit score, recently launched a service that pre-qualifies borrowers for modification programmes using their in-house scoring data. Lenders pay a small fee for Fico to refer potential candidates for modifications that have already been vetted for inclusion in the programme. Fico can also help lenders find borrowers that will best respond to modifications and learn how to get in touch with them. The service is free for borrowers. Those who do not qualify are put in touch with credit counsellors.
+
+I wonder what the meaning is of "will best respond to modifications" and where the labeled training data come from.
+
+From a lender's perspective (and FICO works for lenders not borrowers!) the ideal borrower for a modification is one who *would not* pay under his current deal, but who *would* under a modification. How can data mining read the minds of borrowers, and identify these people?
+
+The difference between a regular payment and a modified payment is often small, $200 in the example cited in the newspaper article. So will modifications really change the behavior of many borrowers?
+
+Modifications may change behavior in undesired ways. Anyone requesting a modification is already thinking of not paying. Those who get modifications will be motivated to come back and ask for further concessions.
+
+Rational borrowers who hear about others getting modifications will try to make themselves appear to be candidates for a modification. So each modification generates a cost that is not restricted to the loss incurred wrt to the individual getting the modification.
+
+In general, you cannot have labeled training data *unless* you have a clear definition of the concept that labels refer to *and* you have historical examples of the concept. It seems to me that neither condition applies here.
+student 	 137
+05-14-2009 04:52 PM ET (US)
+	
+When will the notes from the last class be available?
+C S JonesPerson was signed in when posted 	 136
+05-14-2009 04:26 PM ET (US)
+	
+I'd like to post a conundrum from the previous assignment to see if anyone has any insights to offer. Sorry that it's a rather long post.
+
+In a previous post relating to classification of positive and unlabeled examples (part iii), I suggested an alternative estimate for the parameter c = p(s=1|y=1). Calling the number of labeled positives t_l and the number of unlabeled positives t_u, the parameter c is on average t_l/(t_l+t_u). I suggested determining c from the estimate:
+
+t_u = sum over unlabeled p(s=1|x),
+
+where p(s=1|x) is the calibrated score from the select model. As was pointed out, this should have been p(y=1|x,s=0). In fact, the correct relation is
+
+c*t_u = sum over unlabeled p(s=1|x).
+
+To see this, note that for a perfect select model, all positives receive the same score c (since they are selected at random and are indistinguishable) and negatives receive score 0, leading to the above result. An imperfect but well-calibrated model has the same result.
+
+Since c is less than 1, the estimate I suggested leads to an overestimation of c. However, for some reason the use of this incorrect (i.e. biased) estimate gave much better results. Using the biased estimate, the accuracy of the final model on the test data was 84%, while the unbiased estimated value for c gave an accuracy of 75% (everything else being equal). This shift in performance was also observed by a classmate on his model.
+
+It may be that the this performance improvement was coincidental to the means of estimating c. In particular, the unbiased estimation procedure led to weights for which 10% were greater than 1 (and were thus set to 1). The biased procedure led to weights such that only about 1% were greater than 1.
+
+So the questions are:
+
+1. Was the performance improvement due to the shifting of most of the weights to values between 0 and 1? When the weights are not shifted, their distribution is truncated. Perhaps this degrades the model performance. If so, perhaps it is more beneficial to choose a scaling of the weights such that their distribution is between 0 and 1 than to use the unbiased estimate of c for the scaling.
+
+2. Was there any significance to the biased estimator I suggested for c? Clearly, this would not always work, since if the select model were very good, the distribution of weights determined by the unbiased estimate of c would be between 0 and 1. However, in this case the biased estimator would lead to a distribution shifted to values between 0 and something less than 1. This would effectively only give more weight to the labeled examples (not necessarily a terrible thing).
+
+Comments?
+Charles Elkan 	 135
+05-14-2009 11:26 AM ET (US)
+	
+/m134: I don't know anything crisp and compelling to say about concept drift. There are obvious heuristic ideas for tackling it, i.e. to retrain one's classifier periodically. As far as I know, no one has even worked out precisely how to detect concept drift, i.e. how to distinguish it from random fluctuations. This is a classical topic in statistics and quality control; see http://en.wikipedia.org/wiki/Sequential_analysis
+
+There is a large area of machine learning called "online learning" which in principle should give algorithms that are robust to concept drift. However, the analysis of these algorithms often assumes no concept drift.
+
+In the context of machine learning, "evolutionary" usually refers to a population of candidate solutions, which get mutated and recombined. Time-varying adaptation does not necessarily need an evolutionary method.
+Student 	 134
+05-14-2009 01:50 AM ET (US)
+	
+Professor Elkan,
+
+Would you comment more on concept drift, and how one may mitigate it by designing an "evolutionary" learning algorithm that can dynamically adapt over time?
+
+The key word here is dynamic adaptation so the algorithm does not need to be retrained with new data. Is this feasible? Can concept drift be at all "automated"?
+Charles ElkanPerson was signed in when posted 	 133
+05-12-2009 04:05 PM ET (US)
+	
+Scores for assignment 4
+
+The mean was 6.5 with standard deviation 2.2, out of the usual maximum of 10.
+
+Surprisingly again, the correlation coefficient with the scores for assignment 3 was only 0.16 (the same as the quiz correlation).
+
+The correlation between quiz 4 and assignment 4 scores is slightly negative, -0.25.
+Charles ElkanPerson was signed in when posted 	 132
+05-12-2009 03:44 PM ET (US)
+	
+Scores for quiz 4
+
+As usual the max was 6. The mean was 3.9 with standard deviation 1.4.
+
+Surprisingly, the correlation coefficient with the scores for quiz 3 was only 0.16. There are many plausible explanations:
+
+- Those who did well the time before slacked off, and vice versa.
+- Grading is random.
+- A large number of questions are needed to get a statistically significant measure of a person's performance.
+- Others?
+
+In any case, the conclusion I draw is that no one should be discouraged, and everyone should continue paying attention, and everyone should prepare well for the final exam.
+Matthew Kennel 	 131
+05-12-2009 12:16 AM ET (US)
+	
+The way to apply the z-scale parameters is to apply a normalization operator on the train, select 'return preprocssing model' or something that, use ModelWriter, save the "model" (which is just a transformation of the features), and then train and save a second model for classification.
+
+For the test set you have to load in the data, then load the normalization model, apply that model (not use normalization operator!), then load in the second model as the classification model.
+
+In sum, many things can go wrong, without error or warning messages.
+Alexei Betin 	 130
+05-11-2009 09:22 PM ET (US)
+	
+Edited by author 05-11-2009 09:46 PM
+/m124: /m128: The way we coped with this problem was to use essentially the same AML file on all training and test datasets. We constructed this AML file to contain a superset of categorical values encountered in all datasets and then made 4 copies of it which only differ by the DAT file they point to. This ensured that application of NominalToBinominal generated the same set of features (including the order of features) on all datasets. And the order of features is important, since it appears that the models are applied using a feature index, not a feature name - something we learned the hard way during previous assignment.
+
+I still don't know of an easy way to apply Z-scale parameters calculated on the training set to the validation set, though.
+Charles ElkanPerson was signed in when posted 	 129
+05-11-2009 07:52 PM ET (US)
+	
+/m128: Thanks for the good suggestion and explanation.
+Kristen Jaskie 	 128
+05-11-2009 07:30 PM ET (US)
+	
+/m124: We seem to have found a reason for, and a fix for the problem of the coefficient/feature mismatch. It seems that when there are no column labels, and then binomial expansion is performed, the coefficients are assumed to simply match in order. If there are additional or fewer nominal values in the test set as in the training set, this order is messed up and the model messes up. It looks like if you name the columns (even something dumb like "A", "B", "C", etc...) then the expanded variables are named something like "A=apple", "A=orange" (for nominal values "apple" and "orange" in the "A" column) and the order no longer matters. If there is an extra nominal value in the test set, it might get named "A=pear", but there will be no matching coefficient in the model so it will get ignored when the model is run on the data.
+Charles ElkanPerson was signed in when posted 	 127
+05-11-2009 07:18 PM ET (US)
+	
+/m125: There certainly exist multiple methods for calculating the parameter c = p(s=1|y=1). These methods will give different results when the basic model p(s=1|x) is imperfect, which it always is in real applications.
+
+Since c is the ratio of labelled examples (where s=1 and y=1) to the total number of examples for which y=1, I estimated the number of unlabelled examples where y=1 and added it to the number of labelled to get the total.Agreed.
+
+The estimate of [the number of] unlabelled positives is simply:
+# positive unlabelled = sum over unlabelled y*p(s=1|y,x)
+
+I think the above should be sum over unlabelled of y*p(y=1|s=0,x)
+which is part of Equation 4 in http://www.cs.ucsd.edu/users/elkan/posonly.pdf
+Charles ElkanPerson was signed in when posted 	 126
+05-11-2009 07:02 PM ET (US)
+	
+/m124: Thank you for the additional pointers and observations!
+
+Even without separate training and test sets, there is a related Rapidminer bug that can give spuriously high accuracy. I filed a bug report about this at http://sourceforge.net/tracker/?func=detai...=114160&atid=667390
+
+"If an input dataset is sorted according to a binary target value, and there is a nominal attribute with many unique values (postcode for example) then the internal RM representation of the attribute makes it be highly correlated with the target.
+
+You can see this by pausing after loading the data, and doing a scatter
+plot of postcode versus target. All high values of postcode have the
+second value for the target.
+
+If the nominal attribute can also be made numerical (e.g. zipcode in the
+US), then its predictive value disappears. The predictive value caused by
+viewing this attribute as nominal is spurious.
+
+The bug is not caused by how missing values are handled.
+
+If you randomly sort the data before loading it into RM, the correlation
+between the nominal attribute and the target disappears. If you use the RM
+option "permutate" (note English mistake: "permutate" should be "permute
+randomly" or "shuffle") inside ExampleSource the spurious correlation
+remains. This is presumably because RM codes the nominal values before
+doing the permutation."
+C S JonesPerson was signed in when posted 	 125
+05-11-2009 06:25 PM ET (US)
+	
+For part iii, I have an alternative method for calculating the parameter c (i.e. p(s=1|y=1)) that gives a rather different result than the notes. Since c is the ratio of labelled examples (where s=1 and y=1) to the total number of examples for which y=1, I estimated the number of unlabelled examples where y=1 and added it to the number of labelled to get the total. The estimate of unlabelled positives is simply:
+
+# positive unlabelled = sum over unlabelled y*p(s=1|y,x)
+                      = sum over unlabelled p(s=1|y=1,x) (since s=1 -> y=1)
+
+This is to be distinguished from taking the average score of the select model over the positive examples.
+
+So is this reasonable? The reason I ask is that I get very different answers from the two approaches. With this method, I get around 47%, while using average score over the labelled gives around 27%. Nevertheless, my performance on the test set is around 84%, so it seems to work.
+Matthew Kennel 	 124
+05-11-2009 04:37 PM ET (US)
+	
+Edited by author 05-11-2009 04:39 PM
+/m120
+
+We have found some gotchas which can hurt. If you do a nominal to binomial conversion on a training set, then you must effectively apply the same actual conversion operator to the test set. This doesn't mean putting in another NominalToBinomial icon for the test set, it means actually applying the same conversion to features that you found from the train so that the ordering of variables etc is exactly the same. If there are nominal features which didn't appear in the training set which exist in the test set, then you may want them to be coded as a something else or just be zero for all binomial features.
+
+If you do a separate conversion then applying the model found in the training part might end up with a coefficient-attribute mismatch resulting in very bad performance. For the first four assignments we found this problem to be vexatious enough that we ended up doing much the preprocessing manually with external scripts. Rapidminer doesn't obviously handle this critical issue too well.
+
+If the performance degrades radically I would first suspect a low-level data processing problem rather than any learning theory problem.
+
+Similar thing applies with Z-scale normalization. It's not usually right to do a separate Normalization icon when running the test set.
+Charles ElkanPerson was signed in when posted 	 123
+05-11-2009 03:32 PM ET (US)
+	
+/m122: Yes, you vary the number of labeled training examples. See also /m99 and /m101.
+student 	 122
+05-11-2009 01:41 PM ET (US)
+	
+/m93: For the learning curve, are we simply varying the size of the labeled examples in the training set?
+Charles Elkan 	 121
+05-11-2009 12:26 PM ET (US)
+	
+Data mining internship at IBM Research
+
+The Data Mining Systems group has an internship opening for the Summer of 2009. We are looking for a Ph.D. student who is interested in data mining/machine learning and parallel and distributed computing. This internship would involve designing, implementing, and evaluating algorithms and systems support for a new platform for large scale mining and analytics in collaboration with IBM research scientists.
+
+We urge qualified applicants to respond with their CV to aghoting (at) us (dot) ibm (dot) com. We would appreciate a quick response as we need to take a decision very soon.
+
+Amol Ghoting
+Research Staff Member
+IBM Research
+Charles Elkan 	 120
+05-11-2009 12:22 PM ET (US)
+	
+Example of subtle overfitting
+
+From a student: We got poor results and are confused as to
+what we are doing wrong. We finally concluded that maybe we were somehow overfitting the data with our preprocessing of the nominal features. We predicted very good results from our 10x cross validation, but our final results were terrible.
+
+My comments: Looking at your report, I cannot see anything obviously wrong. Indeed, I would say that you have applied good methodology as far as I can tell. I can see two possible exceptions, which may be the source of the bad performance:
+
+(1) As you say, replacing feature values by target averages *before* cross-validation is not legitimate. You need to do this in each training fold separately, to avoid peeking at the test fold.
+
+(2) (Related.) Calculating target averages for rare feature values will overfit. You dichotomized features with under 10 values. But some of these values might still be very rare, if others are common. And you computed averages for all 50 states; some of these are rare. I suggest not computing averages at all, and creating dichotomized new features only for feature values that have count over 100, regardless of how many other values there are for the same feature.
+Charles Elkan 	 119
+05-11-2009 12:18 PM ET (US)
+	
+/m118: Yes, this is a good idea.
+Wenzhong Zhao 	 118
+05-11-2009 12:10 PM ET (US)
+	
+Simple workaroud to the per-example weighting problem. Here are the steps:
+1) Normalize the weights between 0 and 10.
+2) Bin the examples to 10 bins based on their weights, 1 to 10.
+3) Duplicate the examples according to their bin. For eample, 4 copies for examples in bin 4.
+4) Then run FastLargeMargin without weights.
+Charles Elkan 	 117
+05-11-2009 01:06 AM ET (US)
+	
+/m113: For case (ii), reject inference, maximum weights should be much smaller than 40 but larger than 1.05.
+
+My guess is that with C=1 you are under-regularizing and getting probability estimates that are not well-calibrated. With C = 1e-5 you may be over-regularizing and getting estimates that are almost constant. In the latter case your final model is essentially the same as with no weighting. But see /m114, /m115 about whether weights are being used at all!
+
+Indeed, accuracy is not the best measure to optimize. Have a look at lift diagrams to see when probability estimates have maximum spread while still being well-calibrated.
+Matthew Kennel 	 116
+05-11-2009 01:00 AM ET (US)
+	
+Edited by author 05-11-2009 01:05 AM
+Some others claim that they do (look in the help for them, some mention "example weights"), but the few I tried are so painfully slow that I couldn't get a single solution in any reasonable time (<10 min), much less cross validation, much less cross validation times multiple regularization parameters. FastLargeMargin takes <10seconds and the parameter search ends up going for a few minutes.
+
+I didn't do anything comprehensive, and I could have missed a method and good parameters to use, but after many futile hours I'm giving up on RM.
+
+I had already downloaded liblinear and used on on the cmd line for prior projects. It didn't have example weights so I couldn't use it but I naively assumed that the RM implementation would include example weighting or give a warning/error if it didn't.
+Charles Elkan 	 115
+05-11-2009 12:50 AM ET (US)
+	
+/m114: Unfortunately I think you are right that FastLargeMargin ignores per-example weights. I looked at the README for the source code of Liblinear as written by Chih-Jen Lin. Per-example weights are not mentioned.
+
+Does anyone know which other Rapidminer classifier learning algorithms do actually use per-example weights?
+Matthew Kennel 	 114
+05-10-2009 10:56 PM ET (US)
+	
+Edited by author 05-10-2009 10:58 PM
+Hi, can anybody verify whether FastLargeMargin actually does reflect any per-example weighting, i.e. it does use this information to make different models depending on the example weight values.
+
+The ClassificationAccuracy does but I have been unable to make FastLargeMargin yield different models regardless of the example weighting. My partner has seen this also himself.
+
+Specifically, immediately after FastLargeMargin I save the model to the .mod file. I do it first when I have example weightings in the input data, and second, when I don't. The .mod files are gzipped XML, so I zcat them both to tmp files and 'diff' them. There are no differences in the actual model coefficients (only incidental stuff relating to the existence of the example weights).
+
+Since the performance measures do seem to use the example weights, seeing different performances when the weighting is on or off is not a good indication that different models were fitted.
+
+If we cannot fit a model which respects example weights then it seems that part 2 isn't doable.
+Kristen Jaskie 	 113
+05-10-2009 10:13 PM ET (US)
+	
+Ok, I'm getting some really odd results for part 2 and wondered if anybody knows why. To find a model to predict p(s|x), I ran a GridParamSearch on C = 1E-7, 1E-6,...1E6, 1E7 using accuracy as the performance measure. Both C=1 and C=1E-5 gave roughly the same accuracy = 70.05%, and all other C values gave very slightly lower predicted accuracies, around 69%. But when I used C=1 to create my final model, and calculated weight as p(s)/p(s|x), I had more than 6000 weights greater than 1. My maximum weight was 40! When I used C=1E-5 however, my results were great. My max weight was 1.05 though my min weight had risen to almost 0.9 from 0.45. While I'm happy with this final model, I'm wondering if anybody else is having this same kind of weird problem, and if anybody knows why that would happen. Makes me wonder if using accuracy as the performance metric is the best thing to do.
+Charles Elkan 	 112
+05-10-2009 09:01 PM ET (US)
+	
+/m111: Theoretically, w(x) cannot be greater than 1. In practice, it can be greater, because of inaccuracies in estimating p(s=1) or p(s=1|x). A reasonable thing to do is to set w(x)=1 if otherwise it would be over 1. But if you find many weights are much higher than 1, then you should question the assumptions you are relying on, and/or the accuracy of your model of p(s=1|x).
+Student 	 111
+05-10-2009 08:02 PM ET (US)
+	
+I have a question about part (iii). Basically, is it possible to have a w(x) greater than 1? For instance, if my c value is 0.25 and if I have a g(x) for an unlabeled example as 0.66, which means it has a high likelihood of being y=1, I can get a very high weight. Now, if my w(x) is greater than 1, how do I duplicate the record for an unlabeled example with a negative weight. If for instance, it is possible to have a w(x) = 3.0, then how do I get 1 - p(y=1|x, s=0)?
+Charles Elkan 	 110
+05-09-2009 06:53 PM ET (US)
+	
+Data-driven optimization of websites
+
+This will be the topic of (likely) the final class meeting. The NY Times has an interesting article on this theme today:
+http://www.nytimes.com/2009/05/10/business/10ping.html
+
+"Mr. Bowman’s main complaint is that in Google’s engineering-driven culture, data trumps everything else. When he would come up with a design decision, no matter how minute, he was asked to back it up with data. Before he could decide whether a line on a Web page should be three, four or five pixels wide, for example, he had to put up test versions of all three pages on the Web. Different groups of users would see different versions, and their clicking behavior, or the amount of time they spent on a page, would help pick a winner.
+
+“Data eventually becomes a crutch for every decision, paralyzing the company and preventing it from making any daring design decisions,” Mr. Bowman wrote.
+
+Google is unapologetic about its approach.
+
+“We let the math and the data govern how things look and feel,” Marissa Mayer, the company’s vice president of search products and user experience, said"
+Charles Elkan 	 109
+05-09-2009 06:12 PM ET (US)
+	
+/m108: The MAR assumption does not say that s is independent of y. Instead, it says that s is independent of y conditional on x. This assumption is true for training set (ii). The MAR assumption implies that p(y|x) can cancel out p(y|x,s=1).
+
+Yes, r/n is a reasonable estimate of p(s=1).
+
+For training a classifier p(y|x), make each training example have weight w(x) = p(s=1)/p(s=1|x). Intuitively, smaller values of p(s=1|x) yield bigger weights. The reason is that these x values are more representative of the unlabeled data.
+Matt Rodriguez 	 108
+05-09-2009 05:52 PM ET (US)
+	
+/m104
+
+It seems to me that the MAR assumption is not valid for training set 2,
+because s not independent of y. This assumption is used in the derivation of the weighting approach, when p(y|x) cancels out p(y|x, s=1).
+
+I want to make sure I know how to use the weighting approach. The goal is to estimate p(y|x). I know I could estimate p(s=1|x). It looks like that r/n = p(s=1) which is the ratio of labeled training examples to total number of training examples. Should the function f be p(y|x) which is weighted by, p(s=1|x), the probability that it was sampled?
+Charles ElkanPerson was signed in when posted 	 107
+05-08-2009 05:22 PM ET (US)
+	
+/m105: Yes, your approach to creating a validation set is reasonable.
+Charles ElkanPerson was signed in when posted 	 106
+05-08-2009 05:21 PM ET (US)
+	
+/m104: "persons with known label are, on average, better prospects that the ones with unknown labels" means that
+      p(y=1|s=1) > p(y=1|s=0).
+"On average" means averaging over x.
+
+MAR and p(s=1|x) != p(s=1) can both be true at the same time. The MAR assumption is that
+      p(s=1|y,x) = p(s=1|x)
+There is no requirement that p(s=1|x) equals constant.
+
+Training a classifier to predict p(s=1|x), then applying it to give weights to examples before training the model of p(y|x), is the alternative approach suggested in /m98.
+student 	 105
+05-08-2009 04:54 PM ET (US)
+	
+For case (iii) where the labeled set includes only a subset of positive examples, the notes mention that p(y|x) may be estimated by g(x)/c, where g(x) is a classifier that estimates p(s=1|x) for the training set and c is the mean value of g(x) for the labeled positive examples of some "Validation" subset.
+
+I'm not sure where to get this validation subset from. The approach that immediately occurs to me is to segregate the training set 90%/10% into training and validation subsets. Is this a good idea?
+Alexei Betin 	 104
+05-08-2009 04:54 PM ET (US)
+	
+/m103: According to the assignment "persons with known label are, on average, better prospects that the ones with unknown labels". To me this means that for (ii) MAR is not true and p(s=1|x) != p(s=1). Which, in turn, means we need first to build a classifier to predict p(s=1|x) and then use that classifier to apply example weights before training the classifier to predict p(y|x). Am I overcomplicating the assignment again?
+Charles ElkanPerson was signed in when posted 	 103
+05-08-2009 04:22 PM ET (US)
+	
+/m102: What you write is correct. But see also /m98.
+student 	 102
+05-08-2009 04:10 PM ET (US)
+	
+My notes say that for reject inference, p(y|x, s=1) = p(y|x) if the Missing At Random assumption is made. This would imply that simply throwing out all the unlabeled examples would be a valid approach for case (ii). Am I correct in this?
+
+Thanks.
+Charles Elkan 	 101
+05-08-2009 01:12 AM ET (US)
+	
+/m97: I mean varying numbers of labeled training examples; see /m93 and /m99. However, varying how many unlabeled examples are used can certainly be interesting and important for some real-world scenarios. A general point I am making is that each real-world scenario should be considered and analyzed individually. Terminology like "reject inference" and "covariate shift" may not apply precisely to a given scenario.
+Charles Elkan 	 100
+05-08-2009 01:09 AM ET (US)
+	
+/m96: If you do this, you should explain clearly in your report what you are doing, and you should discuss whether or not this would be legitimate in a real-world application. Realistically, would the unlabeled test information be available at training time? The answer may be different for different real-world scenarios.
+Charles Elkan 	 99
+05-08-2009 01:07 AM ET (US)
+	
+/m93: Good question and good points. Typically researchers remove labeled examples and keep the set of unlabeled examples fixed. This may make sense given the assumption that labeled data is what is expensive. But different experimental procedures can certainly be more meaningful in some cases.
+Charles Elkan 	 98
+05-08-2009 01:04 AM ET (US)
+	
+/m92: As explained in class, in theory you don't need to do anything to overcome covariate shift, under certain conditions. So, you could investigate experimentally whether it seems to be true that training on different-sized shifted training sets gives about the same accuracy as training on nonshifted training sets.
+
+Alternatively, you could apply a weighting scheme to overcome the shift. This weighting scheme is explained on page 45 of the online notes. It requires having access to the unlabeled test examples at training time.
+student 	 97
+05-08-2009 12:57 AM ET (US)
+	
+I am wondering if in the assignment writeup you mention "...providing a curve figure that shows accuracy as a function of the number of labeled training examples used..."
+
+I am wondering if you mean labeled training examples or unlabeled training examples. It seems to make more sense to do this for unlabeled training examples (at least for datasets 2 and 3).
+student 	 96
+05-08-2009 12:42 AM ET (US)
+	
+Can we use the test set statistics (obviously excluding the label) for ONLY normalization purposes and nominal to binary order in RapidMiner.
+David Zaleta 	 95
+05-07-2009 10:01 PM ET (US)
+	
+Deleted by author 05-07-2009 10:22 PM
+Youn Kim 	 94
+05-07-2009 07:06 PM ET (US)
+	
+/m91: oops forgot my email: younkim at ucsd dot edu
+Matthew Kennel 	 93
+05-07-2009 07:03 PM ET (US)
+	
+Another question on the latest assignment:
+
+"For each training set, you should provide a learning curve figure that shows accuracy as a function of the number of labeled training examples used."
+
+As I interpret this, it means that we should downsample the labeled training instances. But does this mean that for a random subset of the training examples we should
+(a) temporarily remove the label and retrain
+or
+(b) remove that instance entirely
+
+One changes the ratio of labeled and unlabeled; the other, the ratio of train to test data. In the cases these come from different distributions there can be a bias on the training.
+
+It's not clear to me which is more desirable or enlightening for the issue in question.
+Alexei Betin 	 92
+05-07-2009 06:47 PM ET (US)
+	
+For the 1st task, do we just train the classifier using the training set using different levels of random sampling?
+
+Or are we expected to actually do something to overcome Covariate Shift, such as apply some density-based weighting to the training set? And if so, what's a possible algorithm/approach to such weighting?
+Youn Kim 	 91
+05-07-2009 04:23 PM ET (US)
+	
+Is there anyone on campus or in Mesa/One Miramar who would be willing to give me a brief tutorial on how to set up and run Rapidminer? I've been using MATLAB for everything, but it has been too time-consuming to write everything from scratch and debug. Thanks!
+Charles ElkanPerson was signed in when posted 	 90
+05-05-2009 06:38 PM ET (US)
+	
+New assignment due in class on May 12
+
+You can find the assignment description at the end of Chapter 7 of
+http://www.cs.ucsd.edu/users/elkan/291/dm.pdf
+
+The datasets you need are all in http://www.cs.ucsd.edu/users/elkan/291/dmfiles.zip
+Charles ElkanPerson was signed in when posted 	 89
+05-05-2009 06:17 PM ET (US)
+	
+Third quiz and assignment
+
+People did well on this assignment, but unfortunately not on the quiz. You can find the quiz along with sample answers on page 32 of
+http://www.cs.ucsd.edu/users/elkan/291/dm.pdf
+
+The mean, std. dev., max for the quiz were 2.1, 1.6, 6.
+
+The mean, std. dev., max for the assignment were 7.4, 0.7, 10.
+Matthew Kennel 	 88
+05-05-2009 03:51 AM ET (US)
+	
+Re-scaling based on the validation inputs isn't a target leak, but it results in bad performance in our experience.
+
+I have been sufficiently vexed by RapidMiner and its conventions that I end up working in MATLAB and external programs.
+Alexei Betin 	 87
+05-04-2009 04:50 PM ET (US)
+	
+/m85: I believe it's fair to do the Z-scaling fresh on the validation data and apply the model, since Z-scaling is done independent of targets and it does not constitute "training".
+
+What I think would not be fair is to re-compute target frequency and average based variables using the validation dataset labels (since these are not supposed to be known) so I found a way to use the frequencies and averages computed on test set to construct the corresponding variables on the validation set - using AttributeConstructionWriter/Loader.
+Charles ElkanPerson was signed in when posted 	 86
+05-04-2009 03:13 PM ET (US)
+	
+/m85: Sorry, I don't know how to do this, but I would guess it's possible in RM. Does anyone else know?
+student 	 85
+05-03-2009 11:10 PM ET (US)
+	
+Is there anyway of saving the avgs/stddevs used during training normalization so that they can be used on the test set for normalization as well?
+Charles ElkanPerson was signed in when posted 	 84
+04-28-2009 07:25 PM ET (US)
+	
+Second quiz and assignment
+
+For the second quiz the mean was 4.3 and stdev 1.8, out of 6
+
+For the second assignment the mean was 6.9 and stdev 1, out of 10.
+Charles ElkanPerson was signed in when posted 	 83
+04-28-2009 02:51 PM ET (US)
+	
+The Center for Advanced Research at PricewaterhouseCoopers has opening for one intern for the summer of 2009:
+
+Social Network Analysis specialist: Duties include evaluating existing methods and developing new approaches for
+social network analysis, link discovery and evolution of networks over time. The candidate must be currently enrolled
+in computer science or similar graduate program and should have prior experience in machine learning, data mining and
+graph analysis. Programming will be required and working knowledge of programming languages such as Java, C# and
+Adobe Flex are highly desirable.
+
+Each intern will select a task for the summer, the details of which will be based on the match of project needs to
+student backgrounds, but will be hands-on, involving substantial design, analysis and interaction with live data.
+Summer interns, like all members of the staff at the Center, are expected to be curious, eager to learn, passionate
+to contribute their ideas, accepting of criticism and suggestions, and willing to constructively confront difficult
+problems and situations. The candidate should also have excellent verbal and written communication skills.
+
+All positions are in San Jose, CA. Compensation is commensurate with experience. PricewaterhouseCoopers is an equal
+opportunity employer. To apply for an internship position, please send an e-mail with your area of interest and
+resume to CenterforAdvancedResearchJobs@us.pwc.com
+Charles Elkan 	 82
+04-27-2009 09:53 PM ET (US)
+	
+/m81: I posted the reply below on the RM forum. In addition, I suggest using LiftParetoChart to visualize the outputs of a classifier. This tells you clearly whether you are getting any lift, and what the range is of real-valued outputs.
+
+==========================
+
+My impression is that using confidences is automatic. The documentation is silent about this, but it does say "The cross-entropy of a classi?er, de?ned as the sum over the logarithms of the true label’s con?dences divided by the number of examples."
+
+For MSE my impression is that real-valued predictions are used also. If they aren't, then MSE doesn't make much sense.
+
+Note that if you use the Logistic Regression option of FastLargeMargin, then Platt scaling is not necessary.
+Matt Rodriguez 	 81
+04-27-2009 09:03 PM ET (US)
+	
+Has anyone got the ClassificationPerformance to return MSE? I see an option squared error, which does a 0/1 error, it does not use the probability returned by the Platt Scaling operator. I don't see a confidence option in the ClassificationPerformance. Maybe I don't have the previous operators configured correctly?
+
+I've found and added to this post on the forum
+http://rapid-i.com/rapidforum/index.php/to...sg3189.html#msg3189
+Charles Elkan 	 80
+04-27-2009 04:26 PM ET (US)
+	
+/m78: Getting 50% positives among the top 40 predictions is a good result, and highly non-trivial for this domain (assuming no leakage from training data to test data). Before trying to improve this further, I suggest aiming for good MSE over the whole test set, and/or good lift over the top 20% of the test set.
+Charles Elkan 	 79
+04-27-2009 04:22 PM ET (US)
+	
+/m77: I have not succeeded either in finding a kernel classifier that runs in reasonable time on a reasonable version of this dataset. So, yes, you can delete the kernel requirement from the assignment.
+student 	 78
+04-27-2009 04:15 PM ET (US)
+	
+My svm model in rapidminer is only predicting 40 examples in class 'TARGET_B = 1', with a precision of about 50%. Is there any way to increase the number of examples it predicts as class 1?
+
+Also, any other advice from groups that have achieved non-trivial classification would be appreciated.
+Matt Rodriguez 	 77
+04-27-2009 03:05 PM ET (US)
+	
+/m76
+
+I've run the FastLargeMargin solver using 371 features and 1/8 of the training set, keeping the same proportion of positive to negative examples. The classifier takes 17 seconds on my machine.
+
+To use a nonlinear kernel a Dual Solver must be used. I have not found a dual solver that finishes in quickly enough to allow me to perform a grid search using thorough cross-validation. For example I've tried using SVMLight(outside of rapidminer) using all the training examples and 30 features and default C and gamma parameters takes about 3 hours to complete.
+
+The assignment says that we should use a nonlinear kernel with tuned C and gamma parameters. Has anyone used a nonlinear kernel solver that completes in less time? In light of computational constraints would it be reasonable to modify the assignment so that we tune a linear kernel?
+
+Matt
+Charles Elkan 	 76
+04-27-2009 12:06 PM ET (US)
+	
+Suggestions for the current assignment
+
+(1) By far the fastest SVM version that I have found in Rapidminer is the operator FastLargeMargin with "solver" parameter set to "L2 SVM Primal." This will learn a useful classifier on 95000 examples with 100 features using less than 15 seconds and less than 1 gig of memory, on my low-end machine. The solver "L2 Logistic Regression" is about equally fast.
+
+The dual SVM solvers are often 100 times or more slower. My impression is that this is true of most dual SVM methods compared to most primal methods.
+
+(2) The operator ClassificationPerformance will tell you the MSE etc. of real-valued predictions, which it calls "confidences." Do not use BinominalClassi?cationPerformance, because it will only evaluate 0/1 predictions.
+
+(3) When you search for good parameter values, using GridParameterOptimization for example, do not use Accuracy or other measure based on 0/1 predictions as the objective to be maximized. Because the interesting class is so rare here, all good classifiers predict all examples to be in the common class, so Accuracy is always trivial.
+Charles Elkan 	 75
+04-26-2009 11:41 AM ET (US)
+	
+Why writing is important
+
+From the New York Times today, http://www.nytimes.com/2009/04/26/business/26corner.html
+
+Q. And is there any change in the kind of qualities you’re looking for compared with 5, 10 years ago?
+
+A. I think this communication point is getting more and more important. People really have to be able to handle the written and spoken word. And when I say written word, I don’t mean PowerPoints. I don’t think PowerPoints help people think as clearly as they should because you don’t have to put a complete thought in place. You can just put a phrase with a bullet in front of it. And it doesn’t have a subject, a verb and an object, so you aren’t expressing complete thoughts.
+Charles Elkan 	 74
+04-26-2009 11:38 AM ET (US)
+	
+/m69: 1do you know of easy/fast logistic regression which has L2 (or better) L1 regularization which minimizes Brier score directly?
+
+I don't know any such software. It is easy to scratch the surface of a simple real-world data mining problem, and find an open research question.
+
+most neural network software actually does seem to do so if you choose a squashing output function and mean squared error but I'm looking for more deterministic/faster algorithms than typical stochastic gradient descent
+
+Stochastic gradient descent (SGD) is actually the fastest and best method known for many learning tasks. See http://leon.bottou.org/projects/sgd
+
+If the training algorithm minimizes Brier score as above, does this affect the calibration of probabilities? To rephrase, is the "automagically calibrated" properties of logistic regression dependent on using Bernoulli (cross-entropy) function?
+
+No. An objective function whose solution is calibrated probabilities is called a "proper" objective function. Both MSE (another name for Brier score) and Bernoulli cross-entropy (another name for conditional log likelihood) are proper. Hinge loss is not proper.
+
+I do not know of any research that has investigated the practical or theoretical differences between different proper objective functions. Here is one entry point to the literature: http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=155295
+Charles Elkan 	 73
+04-26-2009 11:27 AM ET (US)
+	
+/m71: I am familiar with methods to train SVM with accuracy as the performance goal and logistic regression with log likelihood as the performance goal, but I am not familiar with methods to train either one with Brier score. Does anybody have any reading on this?
+
+There may exist some papers on this topic, but it is a gap in the literature. Brier score (MSE) and conditional log likelihood (CLL) are both optimized by true probabilities, so optimizing CLL is a reasonable thing to do even when performance is measured by MSE. For this assignment, you can use black-box SVMs and/or logistic regression. Your focus should be on the practical issues of dealing with many examples, many features, badly coded features, etc.
+Charles Elkan 	 72
+04-26-2009 11:21 AM ET (US)
+	
+/m68, /m70: Sorry, I don't know the answers to these specific questions. Feel free to ask them on the Rapidminer forum. Anyone who finds out answers, please do post them here.
+student 	 71
+04-26-2009 05:29 AM ET (US)
+	
+Rapidminer's LibSVMLearner operator needs the label field set to nominal type but its RegressionPerformance operator (which calculates Brier score) requires for the label to be set to a numerical type. Has anyone found a way around this?
+
+Also, I am familiar with methods to train SVM with accuracy as the performance goal and logistic regression with log likelihood as the performance goal, but I am not familiar with methods to train either one with Brier score. Does anybody have any reading on this?
+student 	 70
+04-26-2009 01:24 AM ET (US)
+	
+I found out that I can return the predicted labels in rapidminer for logistic regression by using the XVPredict operator with logisticRegression and ModelApplier as children. However, the predicted labels are only 0 and 1, not a probability. Presumably the LogisticRegression operator has some sort of internal threshold calculation to decide on a predicted label. Does anyone know how to output the prediction from LogisticRegression as probabilities?
+Matthew Kennel 	 69
+04-25-2009 10:01 PM ET (US)
+	
+
+Most logistic regression software is maximizing the log-likelihood, right?
+
+In our case, we are trying to minimize Brier score. My questions:
+
+1) do you know of easy/fast logistic regression which has L2 (or better) L1 regularization which minimizes Brier score directly?
+
+(most neural network software actually does seem to do so if you choose a squashing output function and mean squared error but I'm looking for more deterministic/faster algorithms than typical stochastic gradient descent)
+
+2) If the training algorithm minimizes Brier score as above, does this affect the calibration of probabilities? To rephrase, is the "automagically calibrated" properties of logistic regression dependent on using Bernoulli (cross-entropy) function?
+Student 	 68
+04-25-2009 02:24 AM ET (US)
+	
+What I would really like from my logistic regression and SVM processes are a list of every example with its predicted score and true label. I could create all the performance metrics I am interested in with that. Does anybody know how to do this with rapidminer?
+Charles ElkanPerson was signed in when posted 	 67
+04-24-2009 06:38 PM ET (US)
+	
+/m66: You are welcome to use different feature sets for different methods. I am quite aware of, and sensitive to, the logistical challenges in dealing with this dataset. Any decent performance is praiseworthy.
+
+Note that one major advantage of logistic regression is that its outputs are automatically probabilities that are calibrated.
+student 	 66
+04-24-2009 05:39 PM ET (US)
+	
+We were thinking of using logistic regression and SVM as our two classifiers for this assignment. Is it okay to use a different set of features for the two methods? SVM, being much slower and more memory intensive, simply will not work without aggressive feature selection, whereas logistic regression might work on the whole data set.
+Charles Elkan 	 65
+04-24-2009 11:06 AM ET (US)
+	
+/m64: Yes indeed, using the LIBSVM option is a good idea.
+Youn Kim 	 64
+04-24-2009 01:29 AM ET (US)
+	
+LIBSVM has an option to return the probability estimates (using a version of logistic regression it seems..). Can we use this output as our calibrated probabilities?
+
+Details on the probability estimation can be found in section of this paper: http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf
+Charles Elkan 	 63
+04-24-2009 12:10 AM ET (US)
+	
+/m62: One recommended reference is Section 3 of "PREDICTING GOOD PROBABILITIES WITH SUPERVISED LEARNING" by Rich Caruana and Alexandru Niculescu-Mizil, available at http://ams.confex.com/ams/pdfpapers/88928.pdf.
+
+Rapidminer has operators named W-IsotonicRegression and PlattScaling. However, the former may be slow and the latter seems to be different from what is usually called Platt scaling. Rapidminer does have several general operators for logistic regression.
+Matthew Kennel 	 62
+04-23-2009 11:53 PM ET (US)
+	
+
+Prof. Elkan, do you have a recommended reference and software for "isotonic regression" for calibration?
+
+I am looking at "Transforming Classifier Scores into Accurate Multiclass Probabilities", Zadrozny & Elkan which appears to be in a conference proceedings.
+
+The only reference in there to an implementation points to a MATLAB code on web page in German, which now appears to be dead.
+
+Also the description of an efficient algorithm and theory is rather sparse. It seems interesting and more general than assuming a logistic regression model.
+Cindy Chen 	 61
+04-22-2009 05:14 PM ET (US)
+	
+Hi all,
+I'm Cindy Chen from Rady School. I'm looking for a new teammate to do the next assignment together as my partner dropped the class. I took quantative analysis in FALL 2008 and could devote a lot of time working on the assignment. Welcome to all classmates who have science or engineering background. Many thanks!
+Contact information:cell:408-7183987, cindy.chen@rady.ucsd.edu
+Charles ElkanPerson was signed in when posted 	 60
+04-22-2009 03:24 PM ET (US)
+	
+/m59: A sample solution for the first quiz is on page 11 here: http://www.cs.ucsd.edu/users/elkan/291/dm.pdf
+Matt Rodriguez 	 59
+04-22-2009 03:16 PM ET (US)
+	
+Is there a link to the answers to the first quiz on the class webpage?
+Charles ElkanPerson was signed in when posted 	 58
+04-21-2009 05:16 PM ET (US)
+	
+Edited by author 04-21-2009 05:30 PM
+/m57: Submitting just the most informative process tree is acceptable (not exceptable :-)
+
+The general point is that, both for research papers and for project reports in an organization, realistically, neither you nor your audience has time or energy to go in depth into every detail. Your job is to be clear and convincing, while being selective in what you present.
+
+People often say that technical work should be reproducible. It should be, and your description of your work should maximize reproducibility, but within whatever length constraint you have.
+Brent Payne 	 57
+04-21-2009 05:07 PM ET (US)
+	
+/m54 In regards to the point about submitting Rapidminer tree-structures, we have multiple Rapidminer processes that we pipelined, twelve to be exact. I am going to select the one I feel is most informative and submit that one. Is this exceptable?
+Charles ElkanPerson was signed in when posted 	 56
+04-21-2009 04:46 PM ET (US)
+	
+First quiz and first assignment
+
+I'll hand these back in class today. The mean and standard deviation are 4.0 and 1.9 for the quiz, out of 6 points maximum; 7.1 and 1.2 out of 10 for the assignment.
+
+For general feedback on the assignment, which is very relevant to the current and future assignments, see /m32.
+Brent Payne 	 55
+04-20-2009 02:51 PM ET (US)
+	
+/m49 the ProcessLog can track the performance across iterations.
+Charles Elkan 	 54
+04-20-2009 12:17 PM ET (US)
+	
+Additional guidelines for the assignments
+
+The most important thing to hand in is a short report on your work. This does not have to be like a full paper: introduction, related work, references, etc., are not needed. But it should be coherent, readable, and interesting.
+
+Using Rapidminer is not required, but it is recommended. Whatever tools you use, your report should convince the reader that you have used them correctly, in the sense that your results are valid and reproducible.
+
+Do submit short, readable displays of critical technical material. Examples:
+(1) If you use Rapidminer, include a graphical display of your tree-structured process.
+(2) If you learn one final linear model based on only selected variables, then do include its equation.
+(3) If you do grid search for algorithm settings, then include a figure showing how the performance metric depends on the parameter settings, to convince the reader that you have found optimal settings correctly.
+(4) If you use Matlab or some other high-level language, and you have a critical inner loop or brief algorithm implementation, then include a display of that part of your code.
+
+Do not submit lengthy printouts or displays that include unimportant information. For example, do not submit Rapidminer XML code or Rapidminer screenshots. Do not submit complete program listings.
+Charles Elkan 	 53
+04-20-2009 10:30 AM ET (US)
+	
+Converting one nominal features to many binary features
+
+I asked this question on the Rapidminer forum and got an answer that sounds good, but I haven't had time to try this myself yet.
+
+Question: "how to get the first behavior, i.e. dichotomization? The default is the second behavior. There does not seem to be a parameter for the operator that gives the first behavior."
+
+Answer: "unfortunately, this operator description is misleading as it describes the general procedure or options to convert nominal attributes to numerical ones. But as you correctly observed the Nominal2Numerical operator simply converts the nominal values to the internal double (numerical) representation of RM.
+
+To dichotomize the values, simply use the Nominal2Binominal operator before applying the Nominal2Numerical operator."
+Charles Elkan 	 52
+04-20-2009 10:20 AM ET (US)
+	
+/m51: Thanks for the reminder.
+
+/m50: What you suggest is certainly a reasonable approach. Warning: the best features to keep for a linear classifier may be not the same as for a nonlinear classifier.
+Matthew Kennel 	 51
+04-20-2009 02:11 AM ET (US)
+	
+
+Warning. Maybe everybody else already noticed it at the get go but just a heads up: there is a huge target leak unless you remove feature TARGET_D (the amount of donation), because TARGET_D > 0 is virtually TARGET_B.
+
+If you don't the results will be very unfair.
+student 	 50
+04-19-2009 11:54 PM ET (US)
+	
+We are running into long run times and low accuracy. I was thinking a good way around this would be to:
+
+1) Find a SVM implementation that runs fast (probably liblinear).
+2) Eliminate features as long as the results do not get worse.
+3) Run the smaller data set through rapidminer with cross validation and grid parameter search.
+
+Does this sound like a reasonable approach?
+student 	 49
+04-19-2009 09:06 PM ET (US)
+	
+/48 This appears to only return output for one of the parameter iterations, presumably the last one. I am still not sure how to see the results for each iteration.
+Brent Payne 	 48
+04-19-2009 07:29 PM ET (US)
+	
+/m46 We are using RapidMiner's GridParameterOptimization operation with a XValidation operator as its child.
+Alexei Betin 	 47
+04-19-2009 07:20 PM ET (US)
+	
+/m41: I was able to do dichotomization (using ValueIterator and ConditionedFeatureGenerator), and target frequency replacement (using ValueIterator, macros, and AttributeConstruction) for a given attribute - so I did create some variables this way and they ended up selected for SVM.
+
+But when I tried to apply these methods while iterating over a set of attributes, it did not quite work, which means you still have to code for each attribute separately. I do have some suggestions from the forum, which I did not have a chance to follow on yet - probably, for the next assignment...
+student 	 46
+04-19-2009 07:03 PM ET (US)
+	
+Has anyone figured out how to use the grid search operator in rapidminer? We are using the ParameterIteration operator but it seems to be sending only the model with the last value of the parameters to the model tester and not showing us output for all values of the parameters.
+Brent Payne 	 45
+04-19-2009 06:42 PM ET (US)
+	
+Just to gauge our performance with the rest of the class. We are currently receiving almost 65% accuracy, but we have not done our grid search for parameter selection.
+Charles Elkan 	 44
+04-18-2009 11:54 AM ET (US)
+	
+/m43: You are free to use other tools, but there are major advantages to using an integrated environment such as Rapidminer. Note that Rapidminer has an operator that is a wrapper for libsvm, and that libsvm is slow even in stand-alone mode, compared to tools like liblinear and SVMSGD.
+Jacob 	 43
+04-18-2009 11:36 AM ET (US)
+	
+In the past I've used the libsvm command line version, which compiles from C. This may be more efficient in terms of research usage than RapidMiner. May we use non-RapidMiner tools for this project?
+Charles Elkan 	 42
+04-18-2009 11:32 AM ET (US)
+	
+/m39: Have you tried the FastLargeMargin operator in Rapidminer? This should be much more efficient since it is specialized to the linear case only.
+
+Outside Rapidminer, here are two good fast linear-only SVM implementations:
+http://leon.bottou.org/projects/sgd
+http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+
+Generally, in my experience, Java software tends to use far too much memory, to have memory leaks, and to be much slower than similar code in other languages. None of this has to be true, but empirically it seems hard to avoid. I am not knowledgeable about these issues, but I really wonder how and why Java became so popular.
+Charles Elkan 	 41
+04-18-2009 11:23 AM ET (US)
+	
+/m40: I suggest you ask this question here: http://rapid-i.com/rapidforum/index.php
+
+After you get a working answer, please summarize it here. Thank you!
+Alexei Betin 	 40
+04-18-2009 12:47 AM ET (US)
+	
+So has someone figured out a simple way to actually do meaningful nominal to numeric conversion in RapidMiner? that is, either replace a nominal attribute with multiple binary attributes for each possible value, or replace it with target mean (or frequency as the case may be for nominal target) for a given value?
+
+Clearly, this can be done outside RapidMiner, but it's rather tedious having to go back and forth between the tools. I can see some functionality which looks promising - macros, value iterators, aggregation, and attribute construction, but could not quite figure it out so far...
+Dave Zaleta 	 39
+04-17-2009 10:44 PM ET (US)
+	
+Edited by author 04-18-2009 12:06 AM
+So what do you do if it IS taking too much memory? I looked at the process in windows and it has gobbled up 1.2Gig of RAM so I am thinking I definitely am swapping. There appear to be some fairly severe memory issues with RapidMiner (not to mention speed issues). Probably there are some memory leaks going on or at a minimum a lack of use of temp space.
+
+I am only using 24 variables and using "fast" linear-only training (without cross validation for the time being just to speed things up) but I am running with ParameterIteration to change the C value to different values with only 10k records and it takes 1.2 Gig of RAM!
+Charles Elkan 	 38
+04-17-2009 08:30 PM ET (US)
+	
+/m34 also: Use operating system tools (such as "top" in Unix) to make sure that SVM training is not thrashing due to lack of RAM. If memory usage exceeds available physical memory, software can slow down 1000x without generating any error messages or warnings.
+Charles Elkan 	 37
+04-17-2009 08:28 PM ET (US)
+	
+/m34: Yes, the value of C can affect runtime a lot. In theory, training should be faster with stronger regularization, i.e. with smaller values of C. Are you seeing this?
+
+I suggest you develop your learning process using a fast linear-only SVM operator. Use a slow SVM operator only after you have confidence in your process.
+
+People often underestimate the importance of fast data mining methods. The benefit of fast training is not obtaining a model quickly. It is being able to develop and debug a reliable learning process. If training is slow, one is tempted to believe that whatever one has done already is best.
+Charles Elkan 	 36
+04-17-2009 08:23 PM ET (US)
+	
+/m35: Feature selection is welcome, but see the warnings in /m32.
+Youn Kim 	 35
+04-17-2009 07:55 PM ET (US)
+	
+Can we implement feature selection for assignment #2?
+Dave Zaleta 	 34
+04-17-2009 07:52 PM ET (US)
+	
+Not sure if everyone will see this but I wanted to send a warning that I am seeing a HUGE difference in run times for different values of C. I have 10 iterations running now and it is currently on the 7th iteration and has been running for over 5 hours! I think the 6th iteration alone took about 2.5-3 hours just itself.
+Charles Elkan 	 33
+04-17-2009 01:41 AM ET (US)
+	
+/m31: I do not know for sure which implementation of SVMs inside Rapidminer is best. Note that implementations that allow nonlinear kernels are usually much slower with a linear kernel than implementations that are specialized for the linear case only.
+
+Pay careful attention to possible hints in the documentation that an implementation may do things that are different from what I explained in class.
+Charles Elkan 	 32
+04-17-2009 01:38 AM ET (US)
+	
+Comments on the linear regression assignment
+
+It is typically useful to rescale predictors to have mean zero and
+variance one. However, it loses interpretability to rescale the
+target variable. Note that if all predictors have mean zero, then the
+intercept of a linear regression model is the mean of the target,
+$15.6243 here.
+
+The assignment specifically asks you to report mean squared error,
+MSE. One could also report root mean squared error, RMSE, but
+whichever is chosen should be used consistently. In general, do not
+confuse readers by switching between multiple performance measures
+without a good reason.
+
+As is often the case, good performance can be achieved with a very
+simple model. The most informative single feature is LASTGIFT, the
+dollar amount of the person's most recent gift. A model based on just
+this single feature achieves RMSE of $9.98. Three of 9 teams
+achieved similar final RMSEs that were slightly better than $9.00.
+The two teams that omitted LASTGIFT achieved RMSE worse than $11.00.
+
+The assignment asks you to produce a final model based on at most 30
+of the original features. Despite this directive, it is not a good
+idea to begin by choosing a subset of the 480 original features based
+on human intuition. The teams that did this all omitted features that
+in fact would have made their final models considerably better,
+including sometimes the feature LASTGIFT.
+
+It is also not a good idea to eliminate automatically features with
+missing values. In many applications, this eliminates too many useful
+features. Also, the fact that a particular feature is missing may
+itself be a useful predictor. If a feature with missing values is
+retained, then it is reasonable to replace each missing value by the
+mean of the non-missing values. More sophisticated imputation
+procedures exist, but they are not always better. What is simple and
+often useful is to create an additional binary feature that is 0 for
+missing and 1 for present.
+
+A couple of teams suggested an intelligent way to recode discrete
+predictors. The idea is to replace each discrete value by the mean of
+the target conditioned on that discrete value. For example, if men
+donate $20 on average and women donate $16 on average, then these
+values would replace the ``M'' and ``F'' values of the gender
+variable. (After these conditional-mean new values have been created,
+they can be scaled to have zero mean and unit variance in the same way
+as other features.) This idea is a good one. In particular, it is a
+good way to convert a discrete feature with many values, for example
+the 50 U.S. states, into a useful single numerical feature. However,
+as explained above, the standard way to recode a discrete feature with
+$m$ values is to introduce $m-1$ binary features. With this standard
+approach, the training algorithm can learn a coefficient for each new
+feature that corresponds to an optimal numerical value for the
+corresponding discrete value. Conditional means are likely to be
+meaningful and useful, but they cannot yield better predictions than
+the coefficients learned in the standard approach.
+Dave Zaleta 	 31
+04-17-2009 01:15 AM ET (US)
+	
+I see 4 different SVM implementations in RM and I am wondering if there is a preferred one. I know you mentioned libSVM but is that the one that is best to use for the current assignment?
+Charles ElkanPerson was signed in when posted 	 30
+04-15-2009 02:54 PM ET (US)
+	
+I've realized that I continued until about 9:30pm yesterday. Our official end time is 9pm, and I will try to stick to that in the future. My apologies to anyone who needed to leave but felt constrained.
+Charles ElkanPerson was signed in when posted 	 29
+04-15-2009 02:53 PM ET (US)
+	
+All lecture notes and assignments so far are available here: http://www.cs.ucsd.edu/users/elkan/291/dm.pdf
+
+I need to reformat this before I link to it directly from the class web page.
+student 	 28
+04-15-2009 02:25 PM ET (US)
+	
+Will the assignment and the lecture notes from yesterday be available online?
+Charles Elkan 	 27
+04-12-2009 08:00 PM ET (US)
+	
+/m25 answer: I was confused by this issue also. It seems there should be an argument to the operator that requests either dichotomization or the other, but I couldn't find such an argument.
+
+I think the "other method" is to convert values to equally-spaced real numbers, in arbitrary order. For example, if the values are fresh, soph, junior, senior, these might be converted into 1, 4, 2, 3 (if the spacing is 1.0 and the ordering is alphabetical, which is just a guess).
+
+There is an active discussion board for Rapidminer users at
+http://forum.rapid-i.com/
+
+Feel free to ask and answer questions there also.
+Charles Elkan 	 26
+04-12-2009 07:52 PM ET (US)
+	
+Reminder: The first assignment is due at the start of class, at 6:30pm Tuesday this week. After the assignment is collected, there will be a ten-minute written individual open-book quiz. The quiz will have one or two questions based on the first lecture, from March 31.
+
+The main topic of the lecture this week will be support vector machines (SVMs).
+Alexei Betin 	 25
+04-12-2009 06:28 PM ET (US)
+	
+I am confused about what Nominal2Numerical really does. The description says it would do one of Dichotomization or some other calculation which I did not understand, but does not say when it does one or the other.
+
+In my case, it does not seem to do Dichotomization so it must be doing that other thing, somehow replacing the nominal value with a real number.
+
+I wonder if someone can tell how exactly that number is calculated?
+Charles Elkan 	 24
+04-12-2009 10:41 AM ET (US)
+	
+Social networks data mining job at Linkedin:
+
+http://www.linkedin.com/jobs?viewJob=&jobId=674266
+
+"This is a unique opportunity to help define and build a new product and engineering team within a mid-sized (360 employees), globally-recognized, energetic, ambitious, and profitable pre-IPO startup. LinkedIn has amassed an incredible dataset, which we use to deliver highly personalized experiences for all our users. Our group also leverages our unique dataset, our creativity, and our skill with quantitative analysis to design and and build products like "people you may know", "who's viewed my profile", "jobs for you", and "company profiles" and core data infrastructure on which many of our products rely on (e.g. standardizing companies). The environment here is optimized for speed--for example, within a week of the initial concept for "viewers of this profile also viewed", it was live on the site. There are many products along these lines that you can help improve, develop and invent. The work is both intellectually rewarding and delivers important value to our users. In addition, the work's varied: one week, you may be involved in predicting which ads a specific user is likely to click on (profile targeted advertising), and the next, working on a model that decides whether 'Webex, Inc' is the same as 'Webex Communications' (it isn't)."
+Youn Kim 	 23
+04-11-2009 12:03 PM ET (US)
+	
+/m21:
+I also get MSE just below 100. Incorporating regularization and using different set of features don't seem to help too much.
+Charles Elkan 	 22
+04-11-2009 10:48 AM ET (US)
+	
+There are several interesting data mining contests currently underway. Here is one from Russia, that focuses on optimizing search-engine results:
+http://company.yandex.ru/grant/2009/en/datasets
+
+"The problem to be solved is to obtain a document ranking function based on learning set (feature vectors of query-document pairs, provided with human relevance judgments). Winners will be awarded money prizes."
+Dave Zaleta 	 21
+04-11-2009 12:00 AM ET (US)
+	
+Just curious. I want to know how my model is comparing to others.
+
+So what is the best 10-fold cross-validation performance (in terms of RMSE) that everyone is getting. I am unable to get much improvement from what I did at the very beginning. My current best is 9.513 +/- 3.179.
+Dave Zaleta 	 20
+04-10-2009 11:33 PM ET (US)
+	
+/m15 I found AttributeFilter did what I needed it to do.
+Charles Elkan 	 19
+04-09-2009 08:46 AM ET (US)
+	
+/m15: Try the operator named FeatureRangeRemoval.
+
+/m17: I don't know how to do this easily in Rapidminer. It may be overkill for this project. I think it's more important to identify useful individual features, and to make sure that they are coded in a way that allows linear regression to exploit them. E.g., representing dates as "day month year" is likely not useful.
+Charles Elkan 	 18
+04-09-2009 08:38 AM ET (US)
+	
+/m16: IIRC (if I recall correctly) all people in this dataset were considered "lapsed" donors at the time the dataset was created. I presume this means they had failed to donate since Feb. 97 or earlier. This particular mailing campaign was an attempt to reactivate lapsed donors.
+
+AFAIK (as far as I know), "now" is approximately July 98.
+Dave Zaleta 	 17
+04-09-2009 01:53 AM ET (US)
+	
+Another quick question before I go to bed. How can you construct something to take the average (or count) of a given attribute (attr1) using another attribute as a "by var" (attr2).
+
+Something like in SAS (pardon my SAS it is a bit rusty and I am a bit tired after struggling with rapidminer):
+
+proc freq out=myOutDS;
+   var attr1;
+   by attr2;
+run;
+Dave Zaleta 	 16
+04-08-2009 11:51 PM ET (US)
+	
+Another question, I see from the some of the date fields that the latest dates are generally feb 1997, At the top of the data dictionary it says it was created in July of 1998.
+
+My question is, as far as the data is concerned, what should I consider to be "NOW"?
+
+The reason I ask is that I would like to use some variable that sees how many days between "now" and the last time a person gave (or between now and the date at which the person have the max amount). The problem is, is that I need to know when the actual data was pulled. It seems unlikely that no one would have given between feb of 1997 and July of 1998.
+
+So the question is what is now for this dataset?
+Dave Zaleta 	 15
+04-08-2009 10:50 PM ET (US)
+	
+OK this is probably a stupid question but a very frustrating one. I want to find an operator in RapidMiner that will simply drop selected columns (or equally only keep certain columns). Or is there some way to configure the linear regression to only use certain attributes?
+Alexei Betin 	 14
+04-08-2009 09:51 PM ET (US)
+	
+Looking for a Partner to do the assignments. Not a university student, have a Master's in Physics & Electronics, generally good at Math, and have long worked in Software Engineering (expert in Java). Not much hands-on experience with Analytics or DM or ML.
+
+Enrolled for grade, prepared to do my best (time permitting) and produce solid work. Open to any approach, can meet weekends (better) or evenings.
+
+If interested, please, email me at abetin@mail.ru.
+Matthew Wong 	 13
+04-08-2009 07:22 PM ET (US)
+	
+Yes, "java xmx800m -jar rapidminer.jar" worked for me. However I was still getting out of memory errors. I will try experimenting with different memory amounts.
+Aditya Menon 	 12
+04-08-2009 03:30 PM ET (US)
+	
+/m11: I think something like
+java -Xmx800m -jar rapidminer.jar
+will work. The "800m" specifies to give RapidMiner 800MB of memory.
+Stephanie 	 11
+04-08-2009 03:23 PM ET (US)
+	
+Does anybody know how to run RapidMiner on a Mac with the correct memory settings for java? If I just run RapidMiner regularly I get memory errors, and I know it was mentioned in class that there is a flag to use when running it on a Mac.
+Jacob 	 10
+04-08-2009 12:05 AM ET (US)
+	
+Edited by author 04-08-2009 01:44 AM
+Howdy,
+
+I'm looking for a partner for the homework assignments. I am a CS master's student and a veteran of Charles' Machine Learning course. I am proficient in Matlab and Python, and my Java is OK. I am interested in learning R and using it for at least one assignment this quarter.
+
+I am looking for someone in another department or company to work with. A potential partner should be willing to put in the time and effort necessary to produce good work and do well in the course. The three main skills for this course are likely to be 1)Math 2)Programming and 3)Writing (in tex). It is okay if my partner is weak in some area, but not all of them. Note that basic tex can be picked up very quickly by a motivated learner.
+
+The best days for me to meet are on Sunday, Tuesday, Thursday, and Saturday. It would help if your schedule were similar. I like to meet in person at least once on each project, I find it helps to clarify ambiguity and formulate a game plan.
+
+I am flexible on how we do things. If you have a way that you like to work, that is fine with me as long as the product is good.
+
+If interested, please email me at jacob dot lyles at gmail dot com
+Charles Elkan 	 9
+04-07-2009 09:53 PM ET (US)
+	
+You can find the first assignment on page 9 of this document:
+http://www-cse.ucsd.edu/~elkan/291/dm.pdf
+Some lecture notes are on earlier pages. I'll organize these better next week.
+Matthew Kennel 	 8
+04-07-2009 07:18 PM ET (US)
+	
+
+I seem to have misplaced the weekly assignment. Is it available for download?
+Charles Elkan 	 7
+04-03-2009 06:04 AM ET (US)
+	
+Thanks to Aditya Menon for finding this good paper:
+
+Clin Lab Med. 2008 Mar;28(1):37-54
+
+Open-source tools for data mining.
+    Zupan B, Demsar J.
+
+... In this article, we discuss the evolution of open-source toolboxes that data mining researchers and enthusiasts have developed over the span of a few decades and review several currently available open-source data mining suites. ...
+
+http://www.ncbi.nlm.nih.gov/pubmed/18194717
+http://www.ailab.si/blaz/papers/2008-OpenSourceDataMining.pdf
+Youn Kim 	 6
+04-03-2009 01:35 AM ET (US)
+	
+I'm an ECE student here looking for someone to work on the assignments together. I study machine learning and image/video processing. Basically, I'd like to work with someone outside of engineering who is willing to put in time to get the work done and who has some machine learning knowledge. The latter is not as important as the former.
+
+younkim at ucsd dot edu
+Kristen Jaskie 	 5
+04-02-2009 05:00 PM ET (US)
+	
+CSE Grad student looking for non-CSE Grad student to work on Data Mining projects with. Good at Math, Matlab Programming (though a little slow - not a natural born programmer), and Technical Writing. Main interest: Machine Learning. Willing to work hard, and expects an "A". Looking for someone willing to put in the time and effort required to accomplish same. Available to work most times except 3-5pm Tues-Friday. Not good at all-nighters and like to get work done earlier rather than later. Email me at kpjaskie@gmail.com if interested.
+
+(Never done a personal add before - how'd I do? :D )
+Charles Elkan 	 4
+04-02-2009 01:43 PM ET (US)
+	
+Open Research Position: Data Mining, Machine Learning
+
+Nokia is the world's leading manufacturer of mobile devices, producing more than 500 million a
+year. These devices are increasingly equipped with rich communication, media and sensing
+capabilities. In addition, Nokia is moving rapidly to develop mobile services that cater to
+these devices. These new capabilities and services bring great opportunities for innovative
+research related to data management, analysis, and visualization of complex heterogeneous data
+sets.
+
+The Context, Content, and Community (C3) Team at Nokia Research Center Palo Alto is researching
+how to extract value from these complex data sources, and how best to transfer that value to the
+consumers. We are an agile, highly focused team. Our work involves a number of challenging
+research areas, including large-scale mobile systems, database systems, data mining and
+visualization. Above all we value innovative thinking, rapid prototyping, a sense of curiosity,
+and a love for working with data.
+
+The C3 team is currently looking for a Data Analytics researcher with practical experience in
+machine learning and data mining. We are looking for the following qualities in a candidate: You
+enjoy working closely in a multi-disciplinary team where you are expected to provide leadership
+and help define the research agenda. You have a strong desire to see your ideas running in real,
+large-scale systems that create value for consumers. You are motivated to create usable and
+reliable prototype systems on a variety of platforms, from mobile devices to server clusters
+running map-reduce frameworks. You are able to express your ideas in a variety of programming
+languages, particularly Python and R. You are eager to experiment with new techniques, and
+desire to innovate in this field.
+
+If this describes you, please send your resume to ext-ginny.borelli@nokia.com for consideration.
+Charles Elkan 	 3
+04-02-2009 10:21 AM ET (US)
+	
+James Fowler
+University of California, San Diego
+
+"Alone in the Crowd: The Structure and Spread of Loneliness in a Large Social Network"
+
+On Thursday, April 2, at 4:00 pm
+
+Location: The Crick Conference Room
+Mandler Hall, room 3545
+http://jhfowler.ucsd.edu
+
+Abstract: The discrepancy between an individual's perceived social isolation
+(i.e., loneliness) and the number of connections in their social
+network is well documented. Yet, few details are known about the
+placement of loneliness within, or the spread of loneliness through,
+social networks. Here, we use network linkage data from the
+population-based Framingham Heart Study to trace the topography of
+loneliness in people's social networks, and the path through which
+loneliness spreads through these networks. The source of
+participants (N = 5,124) is the Offspring Cohort of the Framingham
+Heart Study, and individuals to whom these participants are linked
+are drawn from the entire set of cohorts in the Framingham Heart
+Study (N = 12,067 individuals in the social network). Results
+indicated that loneliness occurs in clusters within social networks,
+extends up to three degrees of separation, and is disproportionately
+represented at the periphery of social networks. In addition,
+loneliness appears to spread through a contagious process even
+though lonely individuals are moved closer to the edge of social
+networks over time. The spread of loneliness was found to be
+stronger than the spread of perceived social connections, stronger
+for friends than family members, and stronger for women than for
+men. The results advance our understanding of the broad social
+forces that drive loneliness and suggest that efforts to reduce
+loneliness in our society may benefit by aggressively targeting the
+people in the periphery to help repair their social networks and to
+create a protective barrier against loneliness that can keep the
+whole network from unraveling.
+Charles Elkan 	 2
+04-01-2009 11:43 AM ET (US)
+	
+Please use this message board also to find a partner for the assignments, if you need one. Feel free to post your contact information and a sentence or two about your background, skills, interests. Mention any complementary characteristics that it would be helpful for a partner to have.
+Charles ElkanPerson was signed in when posted 	 1
+03-31-2009 03:43 PM ET (US)
+	
+Welcome to CSE 291 (Predictiva analytics and data mining) in Spring 2009. Please use this forum to ask questions of general interest. Feel free to discuss the lectures, assignments, readings, and more. Feel free to answer questions from other students, including about the assignments. Anything here is public and hence it is fair for all students to use it.
+
+Please only email the instructor for specifically personal issues, such as queries about individual grading.

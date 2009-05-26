@@ -1,0 +1,35 @@
+\section{Models}
+\subsection{SVM Classification}
+For data preparation, we transform the raw document counts in the input data to log counts using the formulae x=log(1+x). This gives a little higher accuracy for all the classifiers we can build, but matters especially when applying stronger regularization and/or feature reduction. The numeric results below are obtained on the transformed input data.
+
+For SVM classification model, since we have to deal with 3 classes, we first dichotomize the target to create 3 new target variables y_{k}=1 if y=k, 0 otherwise where k=1,2,3, and y is the original target. We then build 3 SVM binary classifiers for each of the new targets y_{k}. We use RapidMiner FastLargeMargin learning algorithm with L2 SVM Primal Solver since this appears to be the fastest SVM learner available in RapidMiner.
+We first train the 3 binary classifiers on the non-transformed original input dataset using 10-fold Cross-Validation. We use GridParameterOptimization to find the optimal value of C=2. The binary classifiers achieve the following average accuracies using 10-fold Cross-Validation:
+class 1: 98.25\%\pm1.60\%
+class 2: 96.75\%\pm2.75\%
+class 3: 97.50\%\pm2.24\%
+For final classification, we apply all 3 classifiers to the input dataset and then choose the class whose respective classifier produces the highest confidence. We achieve 100\% accuracy on the input dataset. The model is likely to be overfit since it has more parameters than training examples.
+
+To reduce overfitting and build a more robust generalized model, we then apply variable reduction by SVM Weighting before we train each of the binary classifiers. After experimenting with different numbers of attributes to keep, we find that we can still achieve very high classification accuracy using only 60 input variables to build all 3 binary classifiers. We also find that with feature reduction, it becomes much more advantageous to transform raw counts into log-counts according as described above. Again, we do GridParameterOptimization to find the optimal value of C, in this case we end up with C=10 so we use somewhat smaller regularization in the case of fewer model parameters.
+The binary classifiers now achieve average accuracy the following average accuracies using 10-fold Cross-Validation:
+class 1: 93.25\%\pm4.48\%
+class 2: 94.50\%\pm2.69\%
+class 3: 94.25\%\pm2.97\%
+The final classifier using 60 input variables (words) achieves the accuracy of 96.5\% on the input dataset.
+The confusion matrix is
+	    true 1	true 2	true 3	class precision
+pred. 1	99	     6	    7	       88.39\%
+pred. 2	0	     94	    0	       100.00\%
+pred. 3	1	     0	   193	       99.48\%
+class recall	99.00\%	94.00\%	96.50\%	
+
+Looking at the final models, we can deduce what kind of documents is represented by each class. Namely, Class 1 appears to contain documents about clinical studies, Class 2 appears to contain documents about aeronautics, whereas Class 3 probably contains documents related to computer or information science.
+
+The final reduced models are as follows:
+Class 1 model:
+- 0.897 * arc - 0.454 * rae - 0.750 * npl - 1.876 * app - 1.140 * scs - 1.809 * aero - 0.297 * wing - 1.240 * naca - 0.268 * wind - 1.279 * note - 1.998 * book - 1.092 * mach - 0.778 * mech - 0.880 * lift - 0.943 * user + 0.488 * flat - 1.179 * experimental + 0.338 * blood - 0.886 * fluid - 0.122 * plate + 0.127 * wings + 0.427 * layer - 0.029 * measurements - 0.868 * system + 1.299 * nickel - 1.014 * speeds - 0.806 * informational - 1.407 * loading - 0.672 * article - 1.256 * cylindrical - 0.309 * service - 1.276 * science - 1.225 * laminar + 0.717 * patient - 1.040 * systems + 0.293 * numbers + 0.188 * investigation - 1.868 * retrieval - 0.494 * dimensional - 0.561 * shekhurin - 1.876 * publications - 0.117 * technical - 0.854 * semantic - 0.575 * subsonic - 0.957 * solution - 1.992 * research + 1.499 * clinical - 1.877 * shreider - 0.442 * boundary - 0.028 * prospects - 1.832 * velocity - 1.247 * supersonic - 0.726 * documents - 1.877 * journals - 1.276 * abstract - 1.043 * scientific - 0.597 * classification + 0.264 * patients - 0.233 * requests - 1.040 * concepts + 0.461
+
+Class 2 model:
+0.084 * arc + 0.257 * rae - 0.197 * npl + 0.318 * app + 0.633 * scs + 0.051 * aero + 0.382 * wing + 3.143 * naca + 0.407 * wind + 0.402 * note - 2.139 * book + 0.171 * mach + 0.240 * mech + 0.149 * lift - 0.156 * user + 0.004 * flat + 1.326 * experimental + 0.152 * blood + 1.352 * fluid + 0.426 * plate + 0.409 * wings - 0.136 * layer + 1.348 * measurements - 1.218 * system + 0.377 * nickel + 0.283 * speeds - 0.465 * informational + 2.313 * loading - 0.737 * article + 0.226 * cylindrical - 0.309 * service - 1.623 * science + 0.022 * laminar + 0.366 * patient - 0.844 * systems + 0.408 * numbers + 0.322 * investigation - 1.544 * retrieval - 0.100 * dimensional - 2.150 * shekhurin - 3.874 * publications - 2.828 * technical - 5.950 * semantic + 0.248 * subsonic + 0.139 * solution - 1.577 * research + 0.379 * clinical - 2.267 * shreider + 0.011 * boundary - 1.134 * prospects + 0.478 * velocity + 0.300 * supersonic - 0.482 * documents - 2.263 * journals - 1.523 * abstract + 1.782 * scientific - 1.971 * classification + 0.062 * patients - 0.949 * requests - 1.142 * concepts + 0.738
+
+Class 3 model:
+- 1.106 * arc - 0.809 * rae - 0.750 * npl - 2.136 * app - 1.430 * scs - 1.543 * aero - 0.323 * wing - 2.469 * naca - 0.588 * wind - 1.460 * note + 1.041 * book - 1.241 * mach - 1.217 * mech - 1.004 * lift + 0.078 * user + 0.673 * flat - 1.460 * experimental + 0.475 * blood - 1.594 * fluid - 0.280 * plate - 0.098 * wings + 0.662 * layer - 1.056 * measurements + 0.572 * system + 1.223 * nickel - 1.179 * speeds + 0.640 * informational - 1.762 * loading + 0.189 * article - 1.605 * cylindrical + 0.254 * service + 1.253 * science - 1.076 * laminar + 0.477 * patient + 0.179 * systems + 0.394 * numbers + 0.355 * investigation + 0.208 * retrieval + 0.084 * dimensional + 0.605 * shekhurin + 1.446 * publications + 2.036 * technical + 2.783 * semantic - 0.464 * subsonic - 0.844 * solution + 0.151 * research + 1.327 * clinical + 0.446 * shreider - 0.803 * boundary + 0.976 * prospects - 2.127 * velocity - 1.471 * supersonic - 0.117 * documents + 0.446 * journals + 0.544 * abstract - 1.172 * scientific + 0.981 * classification + 1.046 * patients + 0.510 * requests + 0.143 * concepts + 0.663
